@@ -1,48 +1,48 @@
-# Architecture
+Architektúra
 
-## System objective
+Rendszercél
 
-For each language-model answer, the system estimates a calibrated correctness probability and an epistemic-risk decomposition. The decomposition separates evidence associated with model knowledge, prompt sensitivity, and decoding instability. The output is designed for downstream policies that must decide whether to answer, warn, ask for clarification, request external verification, abstain, or escalate.
+Minden nyelvi modell válaszához a rendszer egy kalibrált helyességi valószínűséget és egy episztemikus kockázati felbontást becsül. A felbontás elkülöníti a modell tudásához, a prompt érzékenységéhez és a dekódolási instabilitáshoz kapcsolódó bizonyítékokat. A kimenet olyan downstream irányelvekhez készült, amelyeknek el kell dönteniük, hogy válaszoljanak, figyelmeztessenek, pontosítást kérjenek, külső ellenőrzést kérjenek, tartózkodjanak a válaszadástól, vagy eszkaláljanak.
 
-## Data flow
+Adatfolyam
 
-1. A dataset record is validated into an immutable canonical evaluation unit.
-2. A baseline prompt is produced from the task and expected response format.
-3. Every configured backend produces a baseline generation with log probabilities when supported.
-4. Answers are canonicalized according to task type.
-5. The backend is queried for numeric self-reported confidence and truth-verification probability.
-6. Repeated stochastic samples are generated under a fixed prompt.
-7. Deterministic meaning-preserving prompt perturbations are generated and evaluated.
-8. Baseline answers from multiple backends are compared.
-9. Answers are adjudicated for lexical, numeric, label, and optional embedding equivalence.
-10. Semantic clusters, dominant mass, entropy, agreement, and contradictions are computed.
-11. Signals are decomposed into knowledge, prompt, and decoding uncertainty.
-12. Signals are fused by a transparent learned model or deterministic weighted rule.
-13. A supervised calibrator optionally transforms the fused probability.
-14. The decision policy applies confidence thresholds, task criticality, subgroup risk, and contradiction rules.
-15. Raw and derived artifacts are serialized before the compact result is persisted.
-16. Evaluation metrics, subgroup audits, selective curves, reports, and drift observations are computed from persisted results.
+1. Egy adathalmazrekordot érvényesítenek egy megváltoztathatatlan kanonikus értékelési egységgé.
+2. Egy alap promptot állítanak elő a feladatból és a várt válaszformátumból.
+3. Minden konfigurált backend egy alap generálást készít log valószínűségekkel, amikor ez támogatott.
+4. A válaszokat a feladattípus szerint kanonizálják.
+5. A backend numerikus, önbevallott magabiztosságra és igazság-ellenőrzési valószínűségre vonatkozó lekérdezést kap.
+6. Ismételt sztokasztikus minták generálódnak rögzített prompt mellett.
+7. Determinisztikus, jelentésmegőrző prompt-perturbációk generálódnak és kiértékelődnek.
+8. Több backend alapválaszait összehasonlítják.
+9. A válaszokat lexikai, numerikus, címke- és opcionális beágyazási ekvivalencia szempontjából elbírálják.
+10. Szemantikus klasztereket, domináns tömeget, entrópiát, egyezést és ellentmondásokat számítanak.
+11. A jeleket tudás-, prompt- és dekódolási bizonytalanságra bontják.
+12. A jeleket egy átlátható, tanult modellel vagy determinisztikus súlyozási szabállyal egyesítik.
+13. Egy felügyelt kalibrátor opcionálisan transzformálja az egyesített valószínűséget.
+14. A döntési politika alkalmazza a magabiztossági küszöböket, a feladatkritikusságot, az alcsoportkockázatot és az ellentmondási szabályokat.
+15. A nyers és származtatott artefaktumokat szerializálják, mielőtt a tömör eredményt perzisztálják.
+16. Az értékelési metrikákat, alcsoport-auditokat, szelektív görbéket, jelentéseket és driftmegfigyeléseket a perzisztált eredményekből számítják.
 
-## Immutability
+Megváltoztathatatlanság
 
-External and cross-layer data is represented with frozen Pydantic models and forbidden extra fields. Mutation is confined to backend clients, calibrator training objects, relational persistence records, and bounded monitoring windows. Serialized artifacts are canonicalized and content-addressed.
+A külső és kereszt-rétegű adatokat lefagyasztott Pydantic modellek és tiltott extra mezők reprezentálják. A módosítás a backend kliensekre, a kalibrátor tanító objektumokra, a relációs perzisztenciarekordokra és a behatárolt monitoringablakokra korlátozódik. A szerializált artefaktumokat kanonizálják és tartalom szerint címezik.
 
-## Backend isolation
+Backend izoláció
 
-Every backend implements the same synchronous contract. The runner applies retries, timeouts delegated to the adapter, cost accounting, metrics, and reproducibility capture. Backend-specific payloads remain in raw responses and reproducibility metadata.
+Minden backend ugyanazt a szinkron szerződést valósítja meg. A futtató újrapróbálkozásokat, az adapternek delegált timeoutokat, költségelszámolást, metrikákat és reprodukálhatósági rögzítést alkalmaz. A backend-specifikus payloadok nyers válaszokban és a reprodukálhatósági metaadatokban maradnak.
 
-## Failure boundaries
+Hibahatárok
 
-A failed model call raises a backend error after bounded retry. A failed example is persisted with structured error type and message. Completed result records are never overwritten by later failure handling. Experiment status is `failed` when any example fails, while successful example artifacts remain available for inspection and resume.
+Egy sikertelen modellhívás backendhibát vált ki korlátozott számú újrapróbálkozás után. Egy sikertelen példa strukturált hibatípussal és üzenettel perzisztálódik. A befejezett eredményrekordokat későbbi hibakezelés soha nem írja felül. Az experiment állapota failed, amikor bármelyik példa sikertelen, miközben a sikeres példa artefaktumok továbbra is elérhetők ellenőrzésre és folytatásra.
 
-## Calibration isolation
+Kalibrációs izoláció
 
-Calibrator fitting requires a development experiment and a held-out test experiment. Fusion fitting requires train, validation, and test experiments. Model selection uses validation only. Final test evaluation occurs after selection and fitting without test labels entering optimization.
+A kalibrátor illesztése egy fejlesztési experimentet és egy félretett teszt experimentet igényel. A fúziós illesztés tréning-, validációs- és tesztexperimenteket igényel. A modellválasztás kizárólag validációt használ. A végső tesztértékelés a kiválasztás és az illesztés után történik, anélkül, hogy tesztcímkék bekerülnének az optimalizációba.
 
-## Storage model
+Tárolási modell
 
-The relational database stores dataset manifests, backend configurations, experiment state, result indexes, calibration artifacts, and drift snapshots. Large raw records are stored as deterministic compressed JSON files. Atomic replacement prevents partially written artifacts.
+A relációs adatbázis tárolja az adathalmaz-manifesztumokat, a backendkonfigurációkat, az experiment állapotát, az eredményindexeket, a kalibrációs artefaktumokat és a drift-pillanatképeket. A nagy nyers rekordokat determinisztikus, tömörített JSON fájlokként tárolják. Az atomi csere megakadályozza a részben megírt artefaktumokat.
 
-## Security model
+Biztonsági modell
 
-The service requires API-key authentication and rate limits each key. Batch paths are restricted to a configured data root. Logs are structured and redacted. Raw artifacts are deliberately complete and require deployment-level access control, encryption, retention, and backup policy.
+A szolgáltatás API-kulcsos hitelesítést igényel, és kulcsonként korlátozza a kérések számát. A batch útvonalak egy konfigurált adatgyökérre korlátozottak. A naplók strukturáltak és maszkoltak. A nyers artefaktumok szándékosan teljesek, és telepítési szintű hozzáférés-vezérlést, titkosítást, megőrzési és biztonsági mentési szabályzatot igényelnek.
