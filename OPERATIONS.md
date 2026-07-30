@@ -1,49 +1,43 @@
-# Operations
+Műveletek
 
-## Database migration
+Adatbázis-migráció
 
-```bash
 alembic upgrade head
-```
 
-Downgrade the initial schema only when all stored data may be removed:
+Az alapértelmezett séma visszaminősítését csak akkor végezze el, ha minden tárolt adat eltávolítható:
 
-```bash
 alembic downgrade base
-```
 
-## Readiness
+Elérhetőség
 
-`/health/live` verifies process availability. `/health/ready` checks database connectivity and reports Redis connectivity. Database failure marks readiness unavailable. Redis failure is reported separately because the service retains a process-local rate limiter.
+A /health/live a folyamat elérhetőségét ellenőrzi. A /health/ready az adatbázis-kapcsolatot ellenőrzi, és jelzi a Redis-kapcsolat állapotát. Az adatbázishiba a readiness állapotot nem elérhetőként jelöli. A Redis-hibát külön jelzi, mert a szolgáltatás megőrzi a folyamaton belüli rate limitert.
 
-## Backup
+Mentés
 
-Back up PostgreSQL and the artifact root at a mutually consistent point. Database result records contain artifact paths, so both stores are needed for complete recovery. SQLite deployments must stop writers or use SQLite online backup before copying the database file.
+A PostgreSQL-t és az artifact gyökeret egy kölcsönösen konzisztens ponton mentse le. Az adatbázis eredményrekordjai tartalmazzák az artifact elérési útjait, ამიტომ mindkét tárolóra szükség van a teljes helyreállításhoz. SQLite telepítések esetén a fájl másolása előtt le kell állítani az írókat, vagy használni kell a SQLite online biztonsági mentést.
 
-## Restore validation
+Visszaállítás-ellenőrzés
 
-After restore:
+Visszaállítás után:
 
-```bash
 alembic upgrade head
 epistemic-uq backend list
 curl http://localhost:8000/health/ready
-```
 
-Select an experiment and verify that every completed result artifact path exists and is readable. Regenerate its report and compare the report JSON hash with the pre-backup hash when available.
+Válasszon ki egy kísérletet, és ellenőrizze, hogy minden befejezett eredmény artifact elérési útja létezik és olvasható. Generálja újra a jelentését, és hasonlítsa össze a jelentés JSON hash-ét az előző mentés előtti hash-sel, ha elérhető.
 
-## Scaling
+Skálázás
 
-Use PostgreSQL rather than SQLite for concurrent workers. Put Redis behind authentication and network policy. Run multiple API replicas behind a load balancer. Artifact storage must be shared, durable, and support atomic rename semantics. For object storage, mount through a consistency layer or implement an artifact-store adapter with conditional writes and content hashes.
+Egyidejű munkafolyamatokhoz PostgreSQL-t használjon SQLite helyett. A Redis-t hitelesítés és hálózati szabályzat mögé helyezze. Futtasson több API-replikát terheléselosztó mögött. Az artifact-tárolónak megosztottnak, tartósnak kell lennie, és támogatnia kell az atomikus átnevezés szemantikáját. Objektumtárolás esetén csatlakoztassa konzisztenciarétegen keresztül, vagy valósítson meg egy artifact-store adaptert feltételes írásokkal és tartalomhash-ekkel.
 
-## Capacity
+Kapacitás
 
-Storage grows with the number of model calls rather than only the number of examples. Per example and backend, the call count is one baseline, one optional self-report, one optional truth verification, the configured sample count, and one call per perturbation. Cross-model execution multiplies this by backend count. Token traces and raw provider responses can dominate artifact size.
+A tárhely a modellhívások számával növekszik, nem csupán a példák számával. Példánként és backendenként a hívások száma egy alap hívás, egy opcionális önbevallás, egy opcionális igazságellenőrzés, a konfigurált mintaszám, valamint egy hívás minden perturbációra. A modellek közötti végrehajtás ezt megszorozza a backendszámával. A tokennyomkövetések és a nyers szolgáltatói válaszok dominálhatják az artifact méretét.
 
-## Incident response
+Incidenskezelés
 
-For backend error spikes, inspect `euq_model_calls_total` by backend and status, then inspect structured logs by trace identifier. For latency changes, inspect `euq_model_call_latency_seconds`. For calibration alarms, inspect stored drift snapshots and regenerate subgroup reports. For parsing failures, inspect `euq_parsing_failures_total` and the corresponding audit generation text.
+Backend hibacsúcsok esetén ellenőrizze az euq_model_calls_total metrikát backend és státusz szerint, majd vizsgálja meg a strukturált naplókat nyomkövetési azonosító alapján. Késleltetésváltozások esetén ellenőrizze az euq_model_call_latency_seconds metrikát. Kalibrációs riasztások esetén vizsgálja meg a tárolt drift pillanatképeket, és generálja újra az alcsoport-jelentéseket. Elemzési hibák esetén ellenőrizze az euq_parsing_failures_total metrikát és a megfelelő auditgenerálási szöveget.
 
-## Key rotation
+Kulcsváltás
 
-Set `EUQ_API_KEYS` to a comma-separated set containing both old and new keys, deploy, migrate clients, remove the old key, and deploy again. Never write production keys into repository files.
+Állítsa be az EUQ_API_KEYS változót vesszővel elválasztott halmazra, amely tartalmazza a régi és az új kulcsot is, telepítse, migrálja az ügyfeleket, távolítsa el a régi kulcsot, majd telepítse újra. Soha ne írjon éles kulcsokat repository-fájlokba.
