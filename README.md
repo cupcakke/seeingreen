@@ -1,45 +1,44 @@
-# Epistemic UQ
+Epistemikus UQ
 
-Epistemic UQ is a complete uncertainty-quantification, confidence-calibration, selective-prediction, and audit system for language-model outputs. Its objective is to estimate the probability that a produced answer is correct, separate model-knowledge uncertainty from prompt sensitivity and decoding instability, calibrate confidence against held-out correctness labels, and convert calibrated risk into explicit downstream actions.
+Az Epistemic UQ egy teljes bizonytalanság-kvantifikációs, magabiztosság-kalibrációs, szelektív-előrejelzési és audit rendszer nyelvi modell kimeneteihez. Célja annak becslése, hogy egy előállított válasz helyes-e, a modellismereti bizonytalanság elkülönítése a promptérzékenységtől és a dekódolási instabilitástól, a magabiztosság kalibrálása visszatartott helyességi címkékhez, valamint a kalibrált kockázat explicit downstream műveletekké alakítása.
 
-The system supports black-box OpenAI-compatible HTTP APIs, Ollama, local Hugging Face causal language models, and any local executable that implements the included JSON protocol. It preserves prompts, requests, generations, token probabilities, confidence queries, truth-verification responses, stochastic samples, prompt perturbations, semantic clusters, features, labels, policy decisions, costs, latency, and reproducibility metadata in content-addressed audit artifacts.
+A rendszer támogatja a fekete doboz OpenAI-kompatibilis HTTP API-kat, az Ollamát, a helyi Hugging Face kauzális nyelvi modelleket, valamint bármely helyi végrehajtható programot, amely megvalósítja a mellékelt JSON protokollt. A promptokat, kéréseket, generálásokat, tokenvalószínűségeket, magabiztossági lekérdezéseket, igazságellenőrzési válaszokat, sztochasztikus mintákat, promptperturbációkat, szemantikus klasztereket, jellemzőket, címkéket, szabályzati döntéseket, költségeket, késleltetést és reprodukálhatósági metaadatokat tartalomcímzett auditartifaktumokban őrzi meg.
 
-## Implemented uncertainty signals
+Megvalósított bizonytalansági jelek
 
-The baseline answer is evaluated with the following independent signals when the selected backend supports them:
+Az alapválasz a következő független jelekkel kerül kiértékelésre, amikor a kiválasztott háttérrendszer támogatja őket:
 
-1. Numeric self-reported confidence obtained through a constrained JSON confidence query.
-2. Answer-level confidence aggregated from token log probabilities with geometric mean, arithmetic mean, minimum, product, or length-normalized product.
-3. Truth-verification probability from a constrained correct-versus-incorrect query.
-4. Self-consistency from repeated stochastic generations under a fixed prompt.
-5. Prompt-perturbation stability under deterministic instruction-order, formatting, task-framing, and lexical transformations.
-6. Cross-model agreement over normalized baseline answers.
-7. Semantic agreement, dominant cluster mass, semantic entropy, lexical agreement, and contradiction detection.
-8. Composite epistemic risk decomposed into model-knowledge uncertainty, prompt-sensitivity uncertainty, and decoding-instability uncertainty.
-9. Transparent learned fusion or deterministic rule-based fusion.
-10. Post-hoc calibration with temperature scaling, Platt scaling, isotonic regression, or beta calibration.
+1. Numerikus önbevallott magabiztosság, amelyet egy korlátozott JSON magabiztossági lekérdezésből nyerünk.
+2. Válaszszintű magabiztosság, amelyet a token logvalószínűségekből aggregálunk geometriai közép, számtani közép, minimum, szorzat vagy hossz-normalizált szorzat segítségével.
+3. Igazságellenőrzési valószínűség egy korlátozott helyes-versus-helytelen lekérdezésből.
+4. Önkonzisztencia ismételt sztochasztikus generálásokból, rögzített prompt mellett.
+5. Promptperturbációs stabilitás determinisztikus utasítássorrend-, formázás-, feladatkeret- és lexikai transzformációk mellett.
+6. Különböző modellek közötti egyezés normalizált alapválaszokon.
+7. Szemantikus egyezés, domináns klaszttömeg, szemantikus entrópia, lexikai egyezés és ellentmondásdetektálás.
+8. Kompozit episztemikus kockázat, amely modellismereti bizonytalanságra, promptérzékenységi bizonytalanságra és dekódolási-instabilitási bizonytalanságra bomlik.
+9. Átlátható tanult fúzió vagy determinisztikus szabályalapú fúzió.
+10. Utólagos kalibráció hőmérsékleti skálázással, Platt-skálázással, izotonikus regresszióval vagy béta-kalibrációval.
 
-## Architecture
+Architektúra
 
-The source tree is divided into explicit layers:
+A forrásfa explicit rétegekre van osztva:
 
-- `schemas.py` contains immutable Pydantic schemas for prompts, requests, generations, token probabilities, samples, answers, clusters, perturbations, calibration bins, labels, subgroup audits, decisions, manifests, drift snapshots, and experiment runs.
-- `backends` contains production adapters for OpenAI-compatible HTTP, Ollama, Hugging Face, and subprocess JSON protocol backends.
-- `processing` contains dataset normalization, answer canonicalization, deterministic perturbation generation, and exact, regex, numeric, token-F1, and structured validators.
-- `uncertainty` contains self-report parsing, log-probability aggregation, semantic adjudication, clustering, agreement statistics, contradiction detection, and epistemic risk decomposition.
-- `calibration` contains reliability metrics, selective prediction metrics, four supervised calibrators, transparent monotonic fusion, deterministic fusion, subgroup audits, grouping-loss proxies, and worst-slice discovery.
-- `policy.py` converts calibrated confidence and risk adjustments into answer, warning, clarification, verification, abstention, or human-escalation actions.
-- `storage.py` contains relational experiment metadata and content-addressed compressed artifact persistence.
-- `runner.py` executes complete experiments, parallelizes examples, resumes completed work, preserves every intermediate artifact, and records drift observations.
-- `reports.py` emits machine-readable JSON, human-readable HTML, reliability diagrams, confidence histograms, coverage-versus-accuracy curves, worst-slice tables, contradiction cases, and overconfident errors.
-- `service.py` exposes authenticated, rate-limited HTTP APIs, Prometheus metrics, health checks, structured logs, and trace identifiers.
-- `cli.py` exposes dataset, backend, experiment, metrics, report, threshold, calibration, and fusion commands.
+* A schemas.py tartalmazza az immutábilis Pydantic sémákat a promptokhoz, kérésekhez, generálásokhoz, tokenvalószínűségekhez, mintákhoz, válaszokhoz, klaszterekhez, perturbációkhoz, kalibrációs bin-ekhez, címkékhez, alcsoport-auditokhoz, döntésekhez, manifesztumokhoz, drift-pillanatképekhez és kísérletfuttatásokhoz.
+* A backends tartalmazza az OpenAI-kompatibilis HTTP, Ollama, Hugging Face és subprocess JSON protokoll háttérrendszerek gyártási adaptereit.
+* A processing tartalmazza az adathalmaz-normalizálást, a válaszkanonikalizálást, a determinisztikus perturbációgenerálást, valamint a pontos, regexes, numerikus, token-F1 és strukturált validátorokat.
+* Az uncertainty tartalmazza az önbevallás-elemzést, a logvalószínűség-aggregálást, a szemantikus elbírálást, a klaszterezést, az egyezési statisztikákat, az ellentmondásdetektálást és az episztemikus kockázatbontást.
+* A calibration tartalmazza a megbízhatósági metrikákat, a szelektív-előrejelzési metrikákat, négy felügyelt kalibrátort, az átlátható monoton fúziót, a determinisztikus fúziót, az alcsoport-auditokat, a grouping-loss proxykat és a legrosszabb szelet felderítését.
+* A policy.py a kalibrált magabiztosságot és a kockázati korrekciókat válasz-, figyelmeztetés-, pontosítás-, ellenőrzés-, tartózkodás- vagy emberi eszkalációs műveletekké alakítja.
+* A storage.py relációs kísérletmetaadatokat és tartalomcímzett, tömörített artifaktum-megőrzést tartalmaz.
+* A runner.py teljes kísérleteket futtat, párhuzamosítja a példákat, folytatja a befejezett munkát, megőrzi minden köztes artifaktumot, és rögzíti a driftmegfigyeléseket.
+* A reports.py gépileg olvasható JSON-t, emberileg olvasható HTML-t, megbízhatósági diagramokat, magabiztossági hisztogramokat, lefedettség–pontosság görbéket, legrosszabb szelet táblázatokat, ellentmondásos eseteket és túlzottan magabiztos hibákat generál.
+* A service.py hitelesített, rate-limitált HTTP API-kat, Prometheus-metrikákat, állapotellenőrzéseket, strukturált naplókat és trace-azonosítókat tesz elérhetővé.
+* A cli.py adatállomány-, háttérrendszer-, kísérlet-, metrika-, jelentés-, küszöb-, kalibráció- és fúzióparancsokat tesz elérhetővé.
 
-## Installation
+Telepítés
 
-Python 3.11 or newer is required.
+Python 3.11 vagy újabb szükséges.
 
-```bash
 python -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
@@ -47,68 +46,52 @@ python -m pip install -r requirements.txt
 python -m pip install --no-build-isolation -e . --no-deps
 cp .env.example .env
 alembic upgrade head
-```
 
-For Hugging Face and embedding-based semantic equivalence:
+Hugging Face-hez és embedding-alapú szemantikus ekvivalenciához:
 
-```bash
 python -m pip install torch transformers sentence-transformers
-```
 
-For tests:
+Teszteléshez:
 
-```bash
 python -m pip install -r requirements-test.txt
 python -m pip install --no-build-isolation -e . --no-deps
 pytest
-```
 
-## Immediate end-to-end validation
+Azonnali, végponttól végpontig tartó ellenőrzés
 
-The repository includes a deterministic local reference engine that implements the same subprocess protocol as a local model process. It performs real arithmetic, comparison, sentiment, extraction, and structured-output tasks and returns aligned token probabilities. The end-to-end command runs baseline generation, self-report, truth verification, stochastic sampling, prompt perturbations, evaluation, persistence, calibration metrics, policy inference, and report export.
+A repozitórium tartalmaz egy determinisztikus helyi referencia motort, amely ugyanazt a subprocess protokollt valósítja meg, mint egy helyi modellfolyamat. Valódi aritmetikai, összehasonlítási, hangulatelemzési, kinyerési és strukturált kimeneti feladatokat végez, és illesztett tokenvalószínűségeket ad vissza. Az end-to-end parancs lefuttatja az alapgenerálást, az önbevallást, az igazságellenőrzést, a sztochasztikus mintavételezést, a promptperturbációkat, az értékelést, a perzisztálást, a kalibrációs metrikákat, a szabályzati következtetést és a jelentéskivonatot.
 
-```bash
 cp .env.example .env
 python scripts/bootstrap.py
 python scripts/e2e.py
-```
 
-The experiment identifier is printed as JSON. Reports are written under `var/reports/<experiment_id>/report.html` and `var/reports/<experiment_id>/report.json`.
+A kísérletazonosító JSON-ként kerül kiírásra. A jelentések a var/reports/<experiment_id>/report.html és a var/reports/<experiment_id>/report.json útvonalak alá íródnak.
 
-## Backend registration
+Háttérrendszer-regisztráció
 
-Register the local reference backend:
+A helyi referencia háttérrendszer regisztrálása:
 
-```bash
 epistemic-uq backend register --path examples/backend-subprocess.json
-```
 
-Register Ollama after the model is installed locally:
+Ollama regisztrálása a modell helyi telepítése után:
 
-```bash
 ollama pull llama3.1:8b
 epistemic-uq backend register --path examples/backend-ollama.json
-```
 
-Register a Hugging Face model:
+Hugging Face modell regisztrálása:
 
-```bash
 epistemic-uq backend register --path examples/backend-huggingface.json
-```
 
-Register an OpenAI-compatible server running at `http://localhost:8080/v1/chat/completions`:
+OpenAI-kompatibilis szerver regisztrálása, amely a http://localhost:8080/v1/chat/completions címen fut:
 
-```bash
 epistemic-uq backend register --path examples/backend-http.json
-```
 
-The HTTP adapter sends chat-completion requests with temperature, top-p, maximum tokens, optional seed, and optional log-probability fields. Provider-specific headers and payload fields can be supplied through the backend configuration `options.headers` and `options.payload` mappings. Secret values are loaded from the environment when `api_key_env` is configured.
+A HTTP adapter chat-completion kéréseket küld hőmérséklettel, top-p-vel, maximális tokenekkel, opcionális maggal és opcionális logvalószínűségi mezőkkel. A szolgáltató-specifikus fejlécek és payload mezők a háttérkonfiguráció options.headers és options.payload leképezésein keresztül adhatók meg. A titkos értékek a környezetből töltődnek be, amikor az api_key_env konfigurálva van.
 
-## Dataset format
+Adatállomány-formátum
 
-JSON Lines, JSON arrays, JSON objects containing an `examples` array, and CSV are accepted. Every normalized record has the following fields:
+JSON Lines, JSON tömbök, examples tömböt tartalmazó JSON objektumok és CSV elfogadott. Minden normalizált rekord a következő mezőket tartalmazza:
 
-```json
 {
   "example_id": "math-001",
   "dataset_id": "reference-benchmark",
@@ -128,140 +111,114 @@ JSON Lines, JSON arrays, JSON objects containing an `examples` array, and CSV ar
   "criticality": "low",
   "metadata": {}
 }
-```
 
-Valid task types are `question_answering`, `classification`, `extraction`, and `structured`. Valid validator methods are `auto`, `regex`, `numeric`, `structured`, and `token_f1`. Numeric validators accept `absolute_tolerance` and `relative_tolerance`. Structured validators accept `required_keys`. Token-F1 validators accept `threshold`.
+Érvényes feladattípusok: question_answering, classification, extraction és structured. Érvényes validátor-módszerek: auto, regex, numeric, structured és token_f1. A numerikus validátorok elfogadják az absolute_tolerance és relative_tolerance értékeket. A strukturált validátorok elfogadják a required_keys értékeket. A Token-F1 validátorok elfogadják a threshold értéket.
 
-## Experiment execution
+Kísérletvégrehajtás
 
-```bash
 epistemic-uq dataset register \
   --path examples/dataset.jsonl \
   --dataset-id reference-benchmark \
   --version 1
-
 epistemic-uq experiment run \
   --dataset examples/dataset.jsonl \
   --dataset-id reference-benchmark \
   --backend reference-local \
   --config config/e2e.yaml
-```
 
-Multiple `--backend` options enable cross-model agreement:
+Több --backend opció keresztmodell-egyezést tesz lehetővé:
 
-```bash
 epistemic-uq experiment run \
   --dataset data/evaluation.jsonl \
   --dataset-id evaluation-v1 \
   --backend ollama-local \
   --backend smollm2-local \
   --config config/default.yaml
-```
 
-Interrupted experiments resume by identifier without re-running completed example-backend pairs:
+A megszakított kísérletek azonosító alapján folytathatók anélkül, hogy az elkészült példá–háttérrendszer párokat újrafuttatnánk:
 
-```bash
 epistemic-uq experiment run \
   --dataset data/evaluation.jsonl \
   --dataset-id evaluation-v1 \
   --backend ollama-local \
   --resume "$EXPERIMENT_ID"
-```
 
-Resume validation rejects changed dataset hashes or changed configuration hashes.
+A folytatás-ellenőrzés elutasítja a megváltozott adatállomány-hash-eket vagy a megváltozott konfiguráció-hash-eket.
 
-## Metrics and reports
+Metrikák és jelentések
 
-```bash
 epistemic-uq metrics compute \
   --experiment-id "$EXPERIMENT_ID" \
   --source calibrated_confidence \
   --bins 15 \
   --strategy quantile
-
 epistemic-uq report generate \
   --experiment-id "$EXPERIMENT_ID" \
   --output-dir "var/reports/$EXPERIMENT_ID"
-```
 
-Metrics include accuracy, reliability bins, expected calibration error, maximum calibration error, Brier score, negative log likelihood, AUROC when both classes are present, area under the risk-coverage curve, coverage, accuracy, risk, and abstention counts.
+A metrikák közé tartozik a pontosság, a megbízhatósági bin-ek, az elvárt kalibrációs hiba, a maximális kalibrációs hiba, a Brier-pontszám, a negatív logvalószínűség, az AUROC, amikor mindkét osztály jelen van, a kockázat–lefedettség görbe alatti terület, a lefedettség, a pontosság, a kockázat és a tartózkodási darabszámok.
 
-## Supervised calibration
+Felügyelt kalibráció
 
-Calibration is fit only on a development experiment and evaluated on a distinct held-out test experiment:
+A kalibrációt csak egy fejlesztési kísérleten illesztjük, és egy külön, visszatartott tesztkísérleten értékeljük:
 
-```bash
 epistemic-uq calibration fit \
   --development-experiment "$DEVELOPMENT_EXPERIMENT_ID" \
   --test-experiment "$TEST_EXPERIMENT_ID" \
   --source self_consistency_confidence \
   --method isotonic \
   --calibrator-id self-consistency-isotonic-v1
-```
 
-The stored artifact contains fitted parameters, development metrics before and after calibration, test metrics before and after calibration, source identity, experiment identities, fitting timestamp, and a training-data hash. Add the calibrator to a pipeline configuration with:
+A tárolt artifaktum tartalmazza az illesztett paramétereket, a fejlesztési metrikákat kalibráció előtt és után, a tesztmetrikákat kalibráció előtt és után, a forrásazonosságot, a kísérletazonosítókat, az illesztési időbélyeget és egy tréningadat-hash-t. A kalibrátort egy pipeline-konfigurációhoz így lehet hozzáadni:
 
-```yaml
 calibration:
   calibrator_id: self-consistency-isotonic-v1
-```
 
-## Transparent confidence fusion
+Átlátható magabiztosság-fúzió
 
-Fusion uses strict train, validation, and test experiment separation. The validation experiment selects the L2 regularization strength. The final transparent model is fitted on train plus validation only after model selection, and the test experiment remains untouched until final evaluation.
+A fúzió szigorú train, validation és test kísérleti szeparációt használ. A validation kísérlet választja ki az L2 regularizációs erősséget. A végső átlátható modell a train plus validation adatokon kerül illesztésre csak a modellválasztás után, a test kísérlet pedig a végső értékelésig érintetlen marad.
 
-```bash
 epistemic-uq fusion fit \
   --train-experiment "$TRAIN_EXPERIMENT_ID" \
   --validation-experiment "$VALIDATION_EXPERIMENT_ID" \
   --test-experiment "$TEST_EXPERIMENT_ID" \
   --model-id transparent-fusion-v1 \
   --monotonic
-```
 
-Add the model to configuration with:
+A modellt a konfigurációhoz így lehet hozzáadni:
 
-```yaml
 fusion:
   mode: learned
   model_id: transparent-fusion-v1
-```
 
-The model exports feature names, nonnegative monotonic coefficients, intercept, normalization statistics, missing-value imputation values, selected regularization, train metrics, validation metrics, test metrics, and training hashes.
+A modell exportálja a jellemzőneveket, a nemnegatív monoton koefficienseket, az interceptet, a normalizációs statisztikákat, a hiányzóérték-imputációs értékeket, a kiválasztott regularizációt, a train metrikákat, a validation metrikákat, a test metrikákat és a tréning-hash-eket.
 
-## Threshold simulation
+Küszöbszimuláció
 
-```bash
 epistemic-uq threshold simulate \
   --experiment-id "$EXPERIMENT_ID" \
   --source calibrated_confidence \
   --objective minimum_risk \
   --max-risk 0.05
-```
 
-Supported objectives are `utility`, `minimum_risk`, and `target_coverage`. Utility optimization accepts correct, incorrect, and abstention utilities. Minimum-risk optimization returns the highest-coverage feasible threshold. Target-coverage optimization returns the operating point closest to the requested coverage.
+A támogatott célfüggvények: utility, minimum_risk és target_coverage. A hasznosságoptimalizálás elfogadott, hibás és tartózkodási hasznosságokat vesz figyelembe. A minimumkockázat-optimalizálás a legnagyobb lefedettségű megvalósítható küszöböt adja vissza. A cél-lefedettség optimalizálás a kért lefedettséghez legközelebb eső működési pontot adja vissza.
 
-## Service API
+Szolgáltatás API
 
-Start the service:
+A szolgáltatás indítása:
 
-```bash
 uvicorn epistemic_uq.service:app --host 0.0.0.0 --port 8000
-```
 
-The default local API key from `.env.example` is `local-development-key`.
+Az alapértelmezett helyi API kulcs a .env.example fájlból: local-development-key.
 
-Health and metrics:
+Állapot és metrikák:
 
-```bash
 curl http://localhost:8000/health/live
 curl http://localhost:8000/health/ready
 curl http://localhost:8000/metrics
-```
 
-Single-query uncertainty estimation:
+Egyetlen lekérdezéses bizonytalanságbecslés:
 
-```bash
 curl -sS http://localhost:8000/v1/uncertainty \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: local-development-key' \
@@ -284,13 +241,11 @@ curl -sS http://localhost:8000/v1/uncertainty \
     "generation": {},
     "config_overrides": {}
   }'
-```
 
-The response contains the normalized answer, full baseline generation, raw uncertainty signals, epistemic decomposition, calibrated confidence, evaluation label when a reference exists, policy action, reasons, and audit artifact path.
+A válasz tartalmazza a normalizált választ, a teljes alapgenerálást, a nyers bizonytalansági jeleket, az episztemikus bontást, a kalibrált magabiztosságot, a hivatkozás esetén az értékelési címkét, a szabályzati műveletet, az okokat és az auditartifaktum elérési útját.
 
-Policy inference:
+Szabályzati következtetés:
 
-```bash
 curl -sS http://localhost:8000/v1/policy/decide \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: local-development-key' \
@@ -308,11 +263,9 @@ curl -sS http://localhost:8000/v1/policy/decide \
     "subgroup_metadata": {},
     "subgroup_audits": []
   }'
-```
 
-Threshold simulation:
+Küszöbszimuláció:
 
-```bash
 curl -sS http://localhost:8000/v1/thresholds/simulate \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: local-development-key' \
@@ -321,64 +274,61 @@ curl -sS http://localhost:8000/v1/thresholds/simulate \
     "labels": [1, 1, 0, 0],
     "utilities": {"objective": "minimum_risk", "max_risk": 0.05}
   }'
-```
 
-Batch evaluation accepts server-local dataset and configuration paths only when both resolve inside `EUQ_ALLOWED_DATA_ROOT`. This prevents arbitrary filesystem reads.
+A kötegelt értékelés csak akkor fogad el szerver-helyi adatállomány- és konfigurációs útvonalakat, ha mindkettő az EUQ_ALLOWED_DATA_ROOT belsejébe oldódik fel. Ez megakadályozza a tetszőleges fájlrendszer-olvasásokat.
 
-## Subprocess backend protocol
+Subprocess háttérrendszer protokoll
 
-The adapter starts the configured command once per request, writes one JSON object to standard input, and reads one JSON object from standard output. The input includes request identifier, model, prompt, temperature, top-p, maximum tokens, seed, stop strings, log-probability request, and metadata. The output requires `text` and supports `model`, `finish_reason`, `token_probabilities`, `usage`, and `reproducibility`.
+Az adapter minden kérésnél egyszer indítja el a konfigurált parancsot, egy JSON objektumot ír a standard bemenetre, és egy JSON objektumot olvas a standard kimenetről. A bemenet tartalmazza a kérésazonosítót, a modellt, a promptot, a hőmérsékletet, a top-p-t, a maximális tokeneket, a magot, a stop stringeket, a logvalószínűség-kérést és a metaadatokat. A kimenet megköveteli a text mezőt, és támogatja a model, finish_reason, token_probabilities, usage és reproducibility mezőket.
 
-Token-probability records contain `token`, `logprob`, optional `probability`, `position`, optional `start_char`, and optional `end_char`. Character spans allow answer-specific token selection for multi-part outputs.
+A tokenvalószínűségi rekordok tartalmazzák a token, logprob, opcionális probability, position, opcionális start_char és opcionális end_char mezőket. A karaktertartományok lehetővé teszik a válaszspecifikus tokenkiválasztást több részből álló kimeneteknél.
 
-## Persistence and auditability
+Perzisztencia és auditálhatóság
 
-Relational metadata is stored through SQLAlchemy in SQLite or PostgreSQL. Raw and derived artifacts are serialized as canonical sorted JSON, compressed with deterministic gzip metadata, hashed with SHA-256, written atomically, and addressed by content hash. Every result links to an audit artifact containing:
+A relációs metaadatok SQLAlchemy-n keresztül SQLite-ban vagy PostgreSQL-ben tárolódnak. A nyers és származtatott artifaktumok kanonikus, rendezett JSON-ként kerülnek sorosításra, determinisztikus gzip metaadatokkal tömörítve, SHA-256-tal hashelve, atomikusan írva és tartalomhash alapján címezve. Minden eredmény egy auditartifaktumhoz kapcsolódik, amely tartalmazza:
 
-- Baseline request and generation.
-- Self-report generation and parsed confidence.
-- Truth-verification generation and parsed probability.
-- Every stochastic sample and normalized answer.
-- Every semantic cluster and agreement statistic.
-- Every perturbation definition, request, generation, answer, and equivalence judgment.
-- Cross-model baseline answers and generation identifiers.
-- Uncertainty features and decomposition.
-- Fusion contributions and post-calibration probability.
-- Evaluation label and policy decision.
+* Az alap kérés és generálás.
+* Az önbevallási generálás és a parszolt magabiztosság.
+* Az igazságellenőrzési generálás és a parszolt valószínűség.
+* Minden sztochasztikus minta és normalizált válasz.
+* Minden szemantikus klaszter és egyezési statisztika.
+* Minden perturbációs definíció, kérés, generálás, válasz és ekvivalenciaítélet.
+* Keresztmodell alapválaszok és generálásazonosítók.
+* Bizonytalansági jellemzők és bontás.
+* Fúziós hozzájárulások és utókalibrációs valószínűség.
+* Értékelési címke és szabályzati döntés.
 
-Experiment manifests preserve dataset hashes, backend configurations, model identifiers, prompt template identifiers and versions, decoding parameters, seeds, timestamps, configuration, source paths, and backend reproducibility metadata.
+A kísérletmanifesztumok megőrzik az adatállomány-hash-eket, a háttérrendszer-konfigurációkat, a modellazonosítókat, a prompt sablonazonosítókat és verziókat, a dekódolási paramétereket, a magokat, az időbélyegeket, a konfigurációt, a forrásutakat és a háttérrendszer reprodukálhatósági metaadatait.
 
-## Observability
+Megfigyelhetőség
 
-Structured JSON logs include trace identifiers. Every HTTP response contains `X-Trace-ID` and `X-Response-Time-Ms`. Prometheus metrics cover model calls, backend errors, latency, prompt tokens, completion tokens, parsing failures, policy actions, recent confidence means, and drift alarms.
+A strukturált JSON naplók trace-azonosítókat tartalmaznak. Minden HTTP válasz tartalmazza az X-Trace-ID és X-Response-Time-Ms fejléceket. A Prometheus-metrikák lefedik a modellhívásokat, háttérrendszer-hibákat, késleltetést, prompt tokeneket, befejezési tokeneket, parszolási hibákat, szabályzati műveleteket, a közelmúltbeli magabiztosságátlagokat és a driftriasztásokat.
 
-The drift monitor computes population stability index over reference and current windows and optionally compares confidence-versus-correctness error. Drift observations are segmented by signal, task type, and subgroup metadata and are persisted when a complete window is available.
+A driftmonitor populációstabilitási indexet számol a referencia és a jelenlegi ablakok között, és opcionálisan összehasonlítja a magabiztosság–helyesség hibát. A driftmegfigyelések jelek, feladattípusok és alcsoportmetaadatok szerint vannak szeletelve, és akkor kerülnek perzisztálásra, amikor egy teljes ablak rendelkezésre áll.
 
-Configured redaction removes email addresses, telephone numbers, credit-card-like sequences, and optional IP addresses from structured logs. Raw audit artifacts remain unredacted because they are the source record and must be protected with filesystem, database, encryption, retention, and access-control policies appropriate to the deployment.
+A konfigurált redakció eltávolítja az e-mail címeket, telefonszámokat, hitelkártya-szerű szekvenciákat és opcionális IP-címeket a strukturált naplókból. A nyers auditartifaktumok azonban redaktálatlanok maradnak, mert ezek a forrásrekordok, és megfelelő fájlrendszeri, adatbázis-, titkosítási, megőrzési és hozzáférés-vezérlési szabályzatokkal kell védeni őket az adott telepítésnek megfelelően.
 
-## Deployment
+Telepítés
 
-Local containers:
+Helyi konténerek:
 
-```bash
 docker compose up --build
-```
 
-The Compose stack runs the API, PostgreSQL 16, and Redis 7. PostgreSQL stores experiment metadata. Redis provides distributed fixed-window API rate limiting. Artifact data is stored in a persistent volume.
+A Compose stack az API-t, a PostgreSQL 16-ot és a Redis 7-et futtatja. A PostgreSQL tárolja a kísérletmetaadatokat. A Redis biztosítja az elosztott, fix ablakos API rate limitinget. Az artifaktumadatok egy perzisztens kötetben tárolódnak.
 
-Before a network deployment:
+Hálózati telepítés előtt:
 
-1. Replace the development API key with at least one cryptographically random key in `EUQ_API_KEYS`.
-2. Terminate TLS at a trusted reverse proxy or service mesh.
-3. Restrict artifact and database access to the API identity.
-4. Configure PostgreSQL backups and artifact-volume snapshots.
-5. Set retention requirements for prompts and generations.
-6. Configure log shipping and Prometheus scraping.
-7. Run migrations with `alembic upgrade head` before deploying the new application version.
-8. Validate backend capability flags against the selected provider.
-9. Fit calibrators only from labeled development data collected under the same task and backend conditions.
-10. Re-audit subgroup calibration after model, prompt, dataset, or policy changes.
+1. Cseréld le a fejlesztői API kulcsot legalább egy kriptográfiailag véletlen kulcsra az EUQ_API_KEYS változóban.
+2. Termináld a TLS-t egy megbízható reverse proxyban vagy service meshben.
+3. Korlátozd az artifaktum- és adatbázishozzáférést az API identitására.
+4. Konfiguráld a PostgreSQL mentéseket és az artifaktumkötet-pillanatképeket.
+5. Állítsd be a promptokra és generálásokra vonatkozó megőrzési követelményeket.
+6. Konfiguráld a logtovábbítást és a Prometheus scrapinget.
+7. Futtesd a migrációkat az alembic upgrade head paranccsal az új alkalmazásverzió telepítése előtt.
+8. Érvényesítsd a háttérrendszer-képességjelzőket a kiválasztott szolgáltatóval szemben.
+9. Kalibrátorokat csak ugyanazon feladat- és háttérrendszer-feltételek mellett gyűjtött, címkézett fejlesztési adatokból illessz.
+10. A modell-, prompt-, adatállomány- vagy szabályzatváltozások után újra auditáld az alcsoport-kalibrációt.
 
-## Test coverage
+Tesztlefedettség
 
-The test suite covers immutable schema validation, backend configuration validation, text and structured normalization, numeric tolerance, confidence parsing, truth parsing, token-probability aggregation, semantic equivalence, semantic clustering, contradiction detection, calibration metrics, selective curves, calibrator serialization, monotonic fusion, rule fusion, subgroup audits, worst-slice discovery, policy actions, artifact persistence, relational persistence, subprocess protocol execution, redaction, drift detection, complete single-example execution, complete dataset execution, resume behavior, and report generation. Hypothesis tests validate selective-curve probability and risk invariants across generated confidence arrays.
+A tesztcsomag lefedi az immutábilis séma validálását, a háttérrendszer-konfiguráció validálását, a szöveges és strukturált normalizálást, a numerikus toleranciát, a magabiztosság-parszolást, az igazság-parszolást, a tokenvalószínűség-aggregálást, a szemantikus ekvivalenciát, a szemantikus klaszterezést, az ellentmondásdetektálást, a kalibrációs metrikákat, a szelektív görbéket, a kalibrátor-szerializálást, a monoton fúziót, a szabályfúziót, az alcsoport-auditokat, a legrosszabb szelet felderítését, a szabályzati műveleteket, az artifaktum-perzisztenciát, a relációs perzisztenciát, a subprocess protokoll végrehajtását, a redakciót, a driftdetektálást, a teljes egypéldányos végrehajtást, a teljes adathalmaz-végrehajtást, a folytatási viselkedést és a jelentésgenerálást. A Hypothesis tesztek validálják a szelektív-görbe valószínűségi és kockázat-invariánsait a generált magabiztossági tömbökön keresztül.
