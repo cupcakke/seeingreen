@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Epistemic UQ Report {{ report.experiment.experiment_id }}</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:1200px;margin:0 auto;padding:2rem;line-height:1.5;color:#171717}table{border-collapse:collapse;width:100%;margin:1rem 0}th,td{border:1px solid #d4d4d4;padding:.5rem;text-align:left;vertical-align:top}th{background:#f5f5f5}code{font-family:ui-monospace,monospace;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem}.card{border:1px solid #d4d4d4;border-radius:.5rem;padding:1rem}.card img{max-width:100%}.bad{font-weight:700}.muted{color:#525252}</style>
+</head>
+<body>
+<h1>Epistemic uncertainty report</h1>
+<p><strong>Experiment:</strong> <code>{{ report.experiment.experiment_id }}</code></p>
+<p><strong>Status:</strong> {{ report.experiment.status }} | <strong>Results:</strong> {{ report.result_count }} | <strong>Generated:</strong> {{ report.generated_at }}</p>
+<h2>Backend comparison</h2>
+{% for backend_id, backend in report.metrics.items() %}
+<h3>{{ backend_id }}</h3>
+<p>Completed results: {{ backend.count }} | Evaluated results: {{ backend.evaluated_count }}</p>
+<table>
+<thead><tr><th>Confidence source</th><th>Accuracy</th><th>ECE</th><th>MCE</th><th>Brier</th><th>NLL</th><th>AUROC</th><th>AURC</th></tr></thead>
+<tbody>
+{% for source, metric in backend.confidence_sources.items() %}
+<tr><td>{{ source }}</td><td>{{ "%.6f"|format(metric.accuracy) }}</td><td>{{ "%.6f"|format(metric.ece) }}</td><td>{{ "%.6f"|format(metric.mce) }}</td><td>{{ "%.6f"|format(metric.brier) }}</td><td>{{ "%.6f"|format(metric.nll) }}</td><td>{% if metric.auroc is not none %}{{ "%.6f"|format(metric.auroc) }}{% endif %}</td><td>{{ "%.6f"|format(metric.aurc) }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p><strong>Policy actions:</strong> {{ backend.decision_counts }}</p>
+{% endfor %}
+<h2>Charts</h2>
+<div class="grid">
+{% for category, files in report.images.items() %}
+{% for file in files %}<div class="card"><h3>{{ category }}</h3><img src="{{ file }}" alt="{{ category }}"></div>{% endfor %}
+{% endfor %}
+</div>
+<h2>Worst calibration slices</h2>
+{% for backend_id, analysis in report.subgroups.items() %}
+<h3>{{ backend_id }}</h3>
+<table>
+<thead><tr><th>Slice</th><th>Count</th><th>Accuracy</th><th>Mean confidence</th><th>ECE</th><th>Brier</th><th>Overconfidence</th><th>Score</th></tr></thead>
+<tbody>
+{% for item in analysis.worst_slices %}
+<tr><td><code>{{ item.slice }}</code></td><td>{{ item.count }}</td><td>{{ "%.6f"|format(item.accuracy) }}</td><td>{{ "%.6f"|format(item.mean_confidence) }}</td><td>{{ "%.6f"|format(item.ece) }}</td><td>{{ "%.6f"|format(item.brier) }}</td><td>{{ "%.6f"|format(item.overconfidence) }}</td><td>{{ "%.6f"|format(item.score) }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endfor %}
+<h2>High-confidence contradictions</h2>
+<table>
+<thead><tr><th>Example</th><th>Backend</th><th>Confidence</th><th>Answer</th><th>Audit</th></tr></thead>
+<tbody>
+{% for item in report.contradictions %}<tr><td>{{ item.example_id }}</td><td>{{ item.backend_id }}</td><td>{{ item.calibrated_confidence }}</td><td>{{ item.answer }}</td><td><code>{{ item.audit_reference }}</code></td></tr>{% endfor %}
+</tbody>
+</table>
+<h2>Overconfident errors</h2>
+<table>
+<thead><tr><th>Example</th><th>Backend</th><th>Confidence</th><th>Decision</th><th>Answer</th><th>Audit</th></tr></thead>
+<tbody>
+{% for item in report.overconfident_errors %}<tr><td>{{ item.example_id }}</td><td>{{ item.backend_id }}</td><td>{{ item.confidence }}</td><td>{{ item.decision }}</td><td>{{ item.answer }}</td><td><code>{{ item.audit_reference }}</code></td></tr>{% endfor %}
+</tbody>
+</table>
+</body>
+</html>

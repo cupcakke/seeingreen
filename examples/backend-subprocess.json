@@ -1,0 +1,18 @@
+{
+  "backend_id": "reference-local",
+  "backend_type": "subprocess",
+  "model": "reference-engine-v1",
+  "command": ["python", "examples/local_backend.py"],
+  "timeout_seconds": 15,
+  "retries": 1,
+  "concurrency": 4,
+  "pricing": {
+    "prompt_per_token": 0.0,
+    "completion_per_token": 0.0,
+    "currency": "USD"
+  },
+  "options": {
+    "supports_logprobs": true,
+    "supports_seed": true
+  }
+}

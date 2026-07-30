@@ -1,0 +1,52 @@
+schema_version: 1
+execution:
+  max_workers: 2
+  request_timeout_seconds: 15
+  retries: 1
+  retry_min_seconds: 1
+  retry_max_seconds: 2
+  seed: 1729
+sampling:
+  sample_count: 2
+  temperature: 0.7
+  top_p: 0.95
+  max_tokens: 128
+perturbation:
+  enabled: true
+  max_variants: 2
+  transforms:
+    - formatting
+    - task_framing
+uncertainty:
+  self_report: true
+  truth_verification: true
+  sampling_agreement: true
+  prompt_perturbation: true
+  cross_model: true
+  semantic_clustering: true
+  contradiction_threshold: 0.75
+calibration:
+  bins: 10
+  strategy: quantile
+  minimum_subgroup_size: 2
+  calibrator: isotonic
+fusion:
+  mode: rule
+policy:
+  answer_threshold: 0.8
+  warning_threshold: 0.6
+  clarification_threshold: 0.45
+  external_verification_threshold: 0.35
+  criticality_adjustments:
+    low: 0.0
+    medium: 0.05
+    high: 0.15
+    critical: 0.25
+storage:
+  compression: gzip
+  flush_every: 1
+observability:
+  drift_window: 2
+  baseline_window: 4
+  psi_threshold: 0.2
+  calibration_alarm_threshold: 0.08

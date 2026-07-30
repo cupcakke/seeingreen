@@ -1,0 +1,5 @@
+semantic:
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  cosine_threshold: 0.82
+  numeric_absolute_tolerance: 0.000001
+  numeric_relative_tolerance: 0.000001

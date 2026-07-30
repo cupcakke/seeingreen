@@ -1,0 +1,40 @@
+services:
+  api:
+    build: .
+    environment:
+      EUQ_DATABASE_URL: postgresql+psycopg://epistemic:epistemic@postgres:5432/epistemic
+      EUQ_ARTIFACT_ROOT: /app/var/artifacts
+      EUQ_API_KEYS: local-development-key
+      EUQ_REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - artifacts:/app/var/artifacts
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: epistemic
+      POSTGRES_USER: epistemic
+      POSTGRES_PASSWORD: epistemic
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U epistemic -d epistemic"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  artifacts:
+  postgres_data:

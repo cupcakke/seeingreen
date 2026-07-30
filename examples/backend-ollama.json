@@ -1,0 +1,15 @@
+{
+  "backend_id": "ollama-local",
+  "backend_type": "ollama",
+  "model": "llama3.1:8b",
+  "endpoint": "http://localhost:11434/api/chat",
+  "timeout_seconds": 120,
+  "retries": 2,
+  "concurrency": 2,
+  "pricing": {},
+  "options": {
+    "ollama_options": {
+      "num_ctx": 8192
+    }
+  }
+}

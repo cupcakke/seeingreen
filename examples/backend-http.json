@@ -1,0 +1,19 @@
+{
+  "backend_id": "openai-compatible-local",
+  "backend_type": "http",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "endpoint": "http://localhost:8080/v1/chat/completions",
+  "timeout_seconds": 60,
+  "retries": 3,
+  "concurrency": 8,
+  "pricing": {
+    "prompt_per_token": 0.0,
+    "completion_per_token": 0.0,
+    "currency": "USD"
+  },
+  "options": {
+    "supports_logprobs": true,
+    "supports_seed": true,
+    "top_logprobs": 5
+  }
+}
